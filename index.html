@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculadora de Plan de Pagos</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin-top: -20px;
+      }
+
+      #calculator-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 80%;
+        max-width: 400px;
+        margin: auto;
+        text-align: center;
+      }
+
+      h1 {
+        color: #333;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      label {
+        color: #333;
+        font-weight: bold;
+      }
+
+      input {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      button {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      #resultado {
+        margin-top: 20px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid #ddd;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="calculator-container">
+      <h1>Calculadora de Plan de Pagos</h1>
+      <!-- Formulario de login -->
+      <form id="login-form">
+        <label for="username">Usuario:</label>
+        <input type="text" id="username" required />
+
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" required />
+
+        <button type="button" id="loginButton">Iniciar Sesión</button>
+        <p>
+          ¿No tienes cuenta?
+          <a href="#register-form" id="toggleForms">Regístrate</a>
+        </p>
+      </form>
+
+      <!-- Formulario de registro -->
+      <form id="register-form" style="display: none">
+        <label for="newUsername">Nuevo Usuario:</label>
+        <input type="text" id="newUsername" required />
+
+        <label for="newPassword">Nueva Contraseña:</label>
+        <input type="password" id="newPassword" required />
+
+        <button type="button" id="registerButton">Registrarse</button>
+        <p>
+          ¿Ya tienes cuenta?
+          <a href="#login-form" id="toggleForms">Inicia Sesión</a>
+        </p>
+      </form>
+
+      <!-- Calculadora y resultados -->
+      <div id="calculator-section" style="display: none">
+        <!-- Formulario de entrada -->
+        <form id="calculator-form">
+          <label for="monto">Monto del Préstamo:</label>
+          <input type="number" id="monto" required />
+
+          <label for="tasa">Tasa de Interés (%):</label>
+          <input type="number" id="tasa" required />
+
+          <label for="plazo">Plazo en Meses:</label>
+          <input type="number" id="plazo" required />
+
+          <label for="periodoGracia">Periodo de Gracia (Meses):</label>
+          <input type="number" id="periodoGracia" value="0" />
+
+          <button type="button" id="calcularButton">
+            Calcular Plan de Pagos
+          </button>
+        </form>
+
+        <!-- Resultados -->
+        <div id="resultado">
+          <!-- Aquí se mostrarán los resultados -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Mock usuarios (solo para fines de demostración, no es seguro en producción)
+      const users = [
+        { username: "user1", password: "password1" },
+        { username: "user2", password: "password2" },
+      ];
+
+      let currentUser = null;
+
+      // Función para verificar las credenciales de inicio de sesión
+      function login(username, password) {
+        return users.find(
+          (user) => user.username === username && user.password === password
+        );
+      }
+
+      // Función para cambiar entre formularios de login y registro
+      function toggleForms() {
+        const loginForm = document.getElementById("login-form");
+        const registerForm = document.getElementById("register-form");
+        const calculatorSection = document.getElementById("calculator-section");
+
+        if (loginForm.style.display === "block") {
+          loginForm.style.display = "none";
+          registerForm.style.display = "block";
+        } else {
+          loginForm.style.display = "block";
+          registerForm.style.display = "none";
+        }
+      }
+
+      // Función para manejar el inicio de sesión
+      function handleLogin() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        const user = login(username, password);
+
+        if (user) {
+          // Almacenar el usuario actual
+          currentUser = user;
+
+          // Ocultar el formulario de login y registro
+          document.getElementById("login-form").style.display = "none";
+          document.getElementById("register-form").style.display = "none";
+
+          // Mostrar la sección de la calculadora después del inicio de sesión
+          document.getElementById("calculator-section").style.display = "block";
+        } else {
+          alert("Credenciales incorrectas. Inténtalo de nuevo o regístrate.");
+        }
+      }
+
+      // Función para manejar el registro de nuevos usuarios
+      function handleRegister() {
+        const newUsername = document.getElementById("newUsername").value;
+        const newPassword = document.getElementById("newPassword").value;
+
+        // Verificar si el usuario ya existe
+        if (users.find((user) => user.username === newUsername)) {
+          alert(
+            "Usuario ya existente. Por favor, elige otro nombre de usuario."
+          );
+        } else {
+          // Agregar el nuevo usuario
+          const newUser = { username: newUsername, password: newPassword };
+          users.push(newUser);
+
+          // Almacenar el usuario actual
+          currentUser = newUser;
+
+          // Ocultar el formulario de login y registro
+          document.getElementById("login-form").style.display = "none";
+          document.getElementById("register-form").style.display = "none";
+
+          // Mostrar la sección de la calculadora después del registro
+          document.getElementById("calculator-section").style.display = "block";
+        }
+      }
+      // Función para calcular el plan de pagos
+      function calcularPlanPagos(monto, tasa, plazo, periodoGracia) {
+        const planPagos = [];
+        let saldo = monto;
+        const tasaMensual = tasa / 100 / 12;
+        const cuota =
+          (monto * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -plazo));
+
+        for (let i = 1; i <= plazo + periodoGracia; i++) {
+          const pago = {};
+          pago.numeroCuota = i;
+          pago.fechaPago = obtenerFechaPago(i);
+          if (i <= periodoGracia) {
+            pago.cuotaPrincipal = 0;
+            pago.interes = 0;
+            pago.totalCuota = 0;
+          } else {
+            pago.cuotaPrincipal = cuota - saldo * tasaMensual;
+            pago.interes = cuota - pago.cuotaPrincipal;
+            pago.totalCuota = cuota;
+            saldo -= pago.cuotaPrincipal;
+          }
+          planPagos.push(pago);
+        }
+
+        return planPagos;
+      }
+
+      // Función para obtener la fecha de pago
+      function obtenerFechaPago(numeroCuota) {
+        const fechaActual = new Date();
+        const nuevaFecha = new Date();
+        nuevaFecha.setMonth(fechaActual.getMonth() + numeroCuota);
+        return nuevaFecha.toISOString().split("T")[0];
+      }
+
+      // Función para mostrar el plan de pagos en la interfaz
+      function mostrarPlanPagos(planPagos) {
+        const resultadoDiv = document.getElementById("resultado");
+
+        // Limpiar resultados anteriores
+        resultadoDiv.innerHTML = "";
+
+        // Crear una tabla para mostrar el plan de pagos
+        const tabla = document.createElement("table");
+        tabla.innerHTML = `
+                <tr>
+                    <th>Cuota</th>
+                    <th>Fecha de Pago</th>
+                    <th>Cuota Principal</th>
+                    <th>Interés</th>
+                    <th>Total Cuota</th>
+                </tr>
+            `;
+
+        // Llenar la tabla con los resultados
+        planPagos.forEach((pago) => {
+          const fila = document.createElement("tr");
+          fila.innerHTML = `
+                    <td>${pago.numeroCuota}</td>
+                    <td>${pago.fechaPago}</td>
+                    <td>${pago.cuotaPrincipal.toFixed(2)}</td>
+                    <td>${pago.interes.toFixed(2)}</td>
+                    <td>${pago.totalCuota.toFixed(2)}</td>
+                `;
+          tabla.appendChild(fila);
+        });
+
+        // Mostrar la tabla en el resultadoDiv
+        resultadoDiv.appendChild(tabla);
+      }
+
+      // Función principal al cargar la página
+      window.onload = function () {
+        // Obtener elementos del DOM
+        const loginButton = document.getElementById("loginButton");
+        const registerButton = document.getElementById("registerButton");
+        const toggleFormsLink = document.getElementById("toggleForms");
+        const calcularButton = document.getElementById("calcularButton");
+
+        // Evento de clic para el botón de inicio de sesión
+        loginButton.addEventListener("click", handleLogin);
+
+        // Evento de clic para el botón de registro
+        registerButton.addEventListener("click", handleRegister);
+
+        // Evento de clic para alternar entre formularios de login y registro
+        toggleFormsLink.addEventListener("click", function (e) {
+          e.preventDefault();
+          toggleForms();
+        });
+
+        // Evento de clic para el botón de calcular
+        calcularButton.addEventListener("click", function () {
+          // Obtener valores de entrada
+          const monto = parseFloat(document.getElementById("monto").value);
+          const tasa = parseFloat(document.getElementById("tasa").value);
+          const plazo = parseInt(document.getElementById("plazo").value);
+          const periodoGracia = parseInt(
+            document.getElementById("periodoGracia").value
+          );
+
+          // Validar entradas
+          if (
+            isNaN(monto) ||
+            isNaN(tasa) ||
+            isNaN(plazo) ||
+            isNaN(periodoGracia)
+          ) {
+            alert("Por favor, ingrese valores válidos.");
+            return;
+          }
+
+          // Calcular plan de pagos
+          const planPagos = calcularPlanPagos(
+            monto,
+            tasa,
+            plazo,
+            periodoGracia
+          );
+
+          // Mostrar el plan de pagos
+          mostrarPlanPagos(planPagos);
+        });
+      };
+    </script>
+  </body>
+</html>
