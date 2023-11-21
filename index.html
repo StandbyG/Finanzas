@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Calculadora de Plan de Pagos</title>
     <style>
+      #calculator-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        flex-direction: column;
+      }
+      .input-section,
+      .result-section {
+        width: 48%;
+      }
       body {
         font-family: "Arial", sans-serif;
         background-color: #f4f4f4;
@@ -67,7 +78,11 @@
       }
 
       #resultado {
-        margin-top: 20px;
+        background-color: #fff;
+        height: auto;
+        width: auto;
+        margin-right: 50px;
+        border: 1px solid #ddd;
       }
 
       table {
@@ -135,20 +150,18 @@
           <input type="number" id="plazo" required />
 
           <label for="periodoGracia">Periodo de Gracia (Meses):</label>
-          <input type="number" id="periodoGracia" value="0" />
+          <input type="number" id="periodoGracia" />
 
           <button type="button" id="calcularButton">
             Calcular Plan de Pagos
           </button>
         </form>
-
-        <!-- Resultados -->
-        <div id="resultado">
-          <!-- Aquí se mostrarán los resultados -->
-        </div>
       </div>
+      <!-- Resultados -->
     </div>
-
+    <div id="resultado">
+      <!-- Aquí se mostrarán los resultados -->
+    </div>
     <script>
       // Mock usuarios (solo para fines de demostración, no es seguro en producción)
       const users = [
@@ -228,7 +241,82 @@
           document.getElementById("calculator-section").style.display = "block";
         }
       }
+
+      // Función para calcular el Valor Actual Neto (VAN)
+      function calcularVAN(monto, tasa, plazo, periodoGracia) {
+        let inversionInicial = monto;
+        let VAN = -inversionInicial;
+
+        const flujosDeEfectivo = calcularFlujosDeEfectivo(
+          monto,
+          tasa,
+          plazo,
+          periodoGracia
+        );
+
+        for (let t = 1; t <= plazo + periodoGracia; t++) {
+          if (t > periodoGracia) {
+            let flujoEfectivo = flujosDeEfectivo[t - periodoGracia - 1];
+            VAN += flujoEfectivo / Math.pow(1 + tasa / 100, t);
+          }
+        }
+
+        return VAN.toFixed(2);
+      }
+
+      function calcularTIR(monto, tasa, plazo, periodoGracia) {
+        const flujosDeEfectivo = calcularPlanPagos(
+          monto,
+          tasa,
+          plazo,
+          periodoGracia
+        );
+
+        const tolerancia = 0.0001;
+        let tir = 0.1;
+
+        const calcularVAN = (tasa) => {
+          let VAN = 0;
+          for (let i = 0; i < flujosDeEfectivo.length; i++) {
+            VAN += flujosDeEfectivo[i] / Math.pow(1 + tasa, i);
+          }
+          return VAN;
+        };
+
+        let VANActual = calcularVAN(tir);
+        let VANAnterior = 0;
+
+        while (Math.abs(VANActual - VANAnterior) > tolerancia) {
+          VANAnterior = VANActual;
+          tir += 0.0001;
+          VANActual = calcularVAN(tir);
+        }
+
+        return (tir * 100).toFixed(2);
+      }
+
+      function calcularFlujosDeEfectivo(monto, tasa, plazo, periodoGracia) {
+        const flujosDeEfectivo = [];
+        const tasaMensual = tasa / 100 / 12;
+        const cuota =
+          (monto * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -plazo));
+
+        let saldo = monto;
+
+        for (let i = 1; i <= plazo + periodoGracia; i++) {
+          if (i <= periodoGracia) {
+            flujosDeEfectivo.push(0);
+          } else {
+            const cuotaPrincipal = cuota - saldo * tasaMensual;
+            flujosDeEfectivo.push(cuotaPrincipal);
+            saldo -= cuotaPrincipal;
+          }
+        }
+
+        return flujosDeEfectivo;
+      }
       // Función para calcular el plan de pagos
+
       function calcularPlanPagos(monto, tasa, plazo, periodoGracia) {
         const planPagos = [];
         let saldo = monto;
@@ -265,8 +353,15 @@
       }
 
       // Función para mostrar el plan de pagos en la interfaz
-      function mostrarPlanPagos(planPagos) {
+      function mostrarPlanPagos(planPagos, monto, tasa, plazo, periodoGracia) {
         const resultadoDiv = document.getElementById("resultado");
+        // Calcular y mostrar VAN
+        const VAN = calcularVAN(monto, tasa, plazo, periodoGracia);
+        mostrarResultado("VAN", VAN);
+
+        // Calcular y mostrar TIR
+        const TIR = calcularTIR(monto, tasa, plazo, periodoGracia);
+        mostrarResultado("TIR", `${TIR}%`);
 
         // Limpiar resultados anteriores
         resultadoDiv.innerHTML = "";
@@ -298,6 +393,13 @@
 
         // Mostrar la tabla en el resultadoDiv
         resultadoDiv.appendChild(tabla);
+      }
+      function mostrarResultado(nombre, valor) {
+        const resultadoDiv = document.getElementById("resultado");
+
+        const resultado = document.createElement("p");
+        resultado.innerHTML = `<strong>${nombre}:</strong> ${valor}`;
+        resultadoDiv.appendChild(resultado);
       }
 
       // Función principal al cargar la página
@@ -348,9 +450,13 @@
             plazo,
             periodoGracia
           );
+          const VAN = calcularVAN(monto, tasa, plazo, periodoGracia);
+          const TIR = calcularTIR(monto, tasa, plazo, periodoGracia);
 
           // Mostrar el plan de pagos
-          mostrarPlanPagos(planPagos);
+          mostrarPlanPagos(planPagos, monto, tasa, plazo, periodoGracia);
+          mostrarResultado("VAN", VAN);
+          mostrarResultado("TIR", `${TIR}%`);
         });
       };
     </script>
